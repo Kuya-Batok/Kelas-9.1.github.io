@@ -1,0 +1,3591 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pohon Keluarga Kelas MTs</title>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --panel: rgba(255, 255, 255, 0.82);
+        --shadow: 0 18px 40px rgba(20, 35, 65, 0.08);
+        --primary: #3d6af3;
+        --primary-deep: #2449b8;
+        --teacher: #8b5cf6;
+        --km: #1db89a;
+        --waka: #f7a41d;
+        --root: #4f69e8;
+        --card: #ffffff;
+        --muted: #677489;
+        --text: #1e2430;
+        --soft: #eef3ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(180deg, #eff5ff 0%, #f9fafc 100%);
+        color: var(--text);
+      }
+
+      .page-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      body:not(.locked) {
+        overflow: auto;
+      }
+
+      body.locked .page-shell,
+      body.locked .chat-widget {
+        filter: blur(2px);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .login-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: grid;
+        place-items: center;
+        background: rgba(16, 24, 40, 0.64);
+        backdrop-filter: blur(8px);
+      }
+
+      body:not(.locked) .login-overlay {
+        display: none;
+      }
+
+      .login-card {
+        width: min(92vw, 430px);
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(59, 76, 120, 0.08);
+        border-radius: 28px;
+        padding: 28px 24px 20px;
+        box-shadow: 0 26px 60px rgba(15, 20, 35, 0.22);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .login-card.is-error {
+        border-color: rgba(217, 45, 76, 0.32);
+        box-shadow: 0 0 0 6px rgba(217, 45, 76, 0.08), 0 26px 60px rgba(15, 20, 35, 0.22);
+        animation: shake 0.26s linear;
+      }
+
+      .login-card.is-success {
+        border-color: rgba(29, 184, 154, 0.28);
+        box-shadow: 0 0 0 6px rgba(29, 184, 154, 0.08), 0 26px 60px rgba(15, 20, 35, 0.22);
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+
+      .login-card h2 {
+        margin: 12px 0 8px;
+        font-size: clamp(1.6rem, 2vw, 2.2rem);
+      }
+
+      .school-name {
+        margin: 14px 0 4px;
+        color: var(--primary-deep);
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .class-name {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .login-card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .lock-badge {
+        display: inline-flex;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(61, 106, 243, 0.12), rgba(36, 73, 184, 0.08));
+        color: var(--primary-deep);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .field-label {
+        display: block;
+        margin: 0 0 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .password-wrap {
+        position: relative;
+      }
+
+      .password-wrap input,
+      .login-form input,
+      .settings-form input {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid rgba(78, 94, 122, 0.18);
+        border-radius: 12px;
+        font-size: 1rem;
+        outline: none;
+        background: rgba(248, 250, 255, 0.96);
+      }
+
+      .password-wrap input {
+        padding-right: 48px;
+      }
+
+      .password-wrap input:focus,
+      .login-form input:focus,
+      .settings-form input:focus {
+        border-color: rgba(61, 106, 243, 0.5);
+        box-shadow: 0 0 0 4px rgba(61, 106, 243, 0.08);
+      }
+
+      .toggle-password,
+      .close-modal {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 1rem;
+        color: var(--muted);
+        padding: 8px 10px;
+      }
+
+      .login-form button,
+      .secondary-btn,
+      .primary-btn,
+      .settings-form button,
+      .auth-btn,
+      .attachment-btn,
+      .chat-send-btn,
+      .signup-form button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease, filter 0.2s ease;
+      }
+
+      .login-form button,
+      .primary-btn,
+      .settings-form button,
+      .auth-btn,
+      .chat-send-btn,
+      .signup-form button {
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        color: white;
+      }
+
+      .login-form button:hover,
+      .secondary-btn:hover,
+      .primary-btn:hover,
+      .settings-form button:hover,
+      .auth-btn:hover,
+      .attachment-btn:hover,
+      .chat-send-btn:hover,
+      .signup-form button:hover {
+        filter: brightness(1.02);
+      }
+
+      .login-error {
+        min-height: 20px;
+        margin-top: 10px;
+        color: #d92d4c;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .secondary-btn,
+      .logout-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 9px 14px;
+        background: rgba(61, 106, 243, 0.08);
+        color: var(--primary-deep);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .preferences-form select {
+        width: 100%;
+        padding: 12px 13px;
+        border: 1px solid rgba(78, 94, 122, 0.18);
+        border-radius: 12px;
+        background: #f8faff;
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      .signup-form select {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid rgba(78, 94, 122, 0.18);
+        border-radius: 12px;
+        background: rgba(248, 250, 255, 0.96);
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .preferences-form input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+      }
+
+      .custom-theme-fields {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .custom-color-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-weight: 700;
+      }
+
+      .custom-color-field input {
+        width: 100%;
+        height: 36px;
+        padding: 3px;
+        border: 1px solid rgba(78, 94, 122, 0.15);
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+      }
+
+      .drawing-launch-btn {
+        width: 100%;
+        border: 1px dashed rgba(61, 106, 243, 0.35);
+        border-radius: 13px;
+        padding: 11px 13px;
+        background: rgba(61, 106, 243, 0.06);
+        color: var(--primary-deep);
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .preference-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 13px;
+        border: 1px solid rgba(78, 94, 122, 0.12);
+        border-radius: 14px;
+        background: #f8faff;
+      }
+
+      .preference-copy strong,
+      .preference-copy span {
+        display: block;
+      }
+
+      .preference-copy strong {
+        font-size: 0.88rem;
+      }
+
+      .preference-copy span {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .chat-widget.compact .chat-messages {
+        max-height: 210px;
+      }
+
+      .chat-widget.compact .message {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+      }
+
+      .drawing-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2300;
+        display: none;
+        place-items: center;
+        padding: 16px;
+        background: rgba(9, 16, 29, 0.72);
+        backdrop-filter: blur(8px);
+      }
+
+      .drawing-modal.open {
+        display: grid;
+      }
+
+      .drawing-dialog {
+        width: min(94vw, 760px);
+        max-height: 94vh;
+        overflow: auto;
+        padding: 20px;
+        border-radius: 24px;
+        background: white;
+        box-shadow: 0 26px 70px rgba(15, 20, 35, 0.28);
+      }
+
+      .drawing-toolbar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .drawing-toolbar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .drawing-toolbar input[type="color"] {
+        width: 34px;
+        height: 30px;
+        padding: 2px;
+        border: 1px solid rgba(78, 94, 122, 0.15);
+        border-radius: 8px;
+      }
+
+      .drawing-toolbar input[type="range"] {
+        width: 110px;
+        accent-color: var(--primary);
+      }
+
+      .drawing-action-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: rgba(61, 106, 243, 0.09);
+        color: var(--primary-deep);
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      #drawingCanvas {
+        display: block;
+        width: 100%;
+        height: min(58vh, 420px);
+        border: 1px solid rgba(78, 94, 122, 0.16);
+        border-radius: 15px;
+        background: white;
+        cursor: crosshair;
+        touch-action: none;
+      }
+
+      .drawing-saved-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .saved-drawing {
+        overflow: hidden;
+        border: 1px solid rgba(78, 94, 122, 0.12);
+        border-radius: 12px;
+        background: #f8faff;
+      }
+
+      .saved-drawing img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1.5;
+        object-fit: cover;
+      }
+
+      .saved-drawing button {
+        width: 100%;
+        border: none;
+        padding: 7px;
+        background: transparent;
+        color: var(--primary-deep);
+        font-size: 0.7rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .settings-modal,
+      .recovery-modal,
+      .signup-modal,
+      .preferences-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        padding: 16px;
+        background: rgba(9, 16, 29, 0.62);
+        backdrop-filter: blur(8px);
+        z-index: 2100;
+      }
+
+      .settings-modal.open,
+      .recovery-modal.open,
+      .signup-modal.open,
+      .preferences-modal.open {
+        display: grid;
+      }
+
+      .settings-dialog,
+      .recovery-dialog,
+      .signup-dialog,
+      .preferences-dialog {
+        width: min(92vw, 420px);
+        background: rgba(255,255,255,0.98);
+        border-radius: 24px;
+        border: 1px solid rgba(59, 76, 120, 0.08);
+        box-shadow: 0 26px 60px rgba(15, 20, 35, 0.2);
+        padding: 20px 20px 18px;
+      }
+
+      .dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .dialog-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .close-modal {
+        position: static;
+        transform: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(61, 106, 243, 0.08);
+        color: var(--primary-deep);
+        font-size: 1rem;
+      }
+
+      .settings-form,
+      .recovery-form,
+      .signup-form,
+      .preferences-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .settings-form .row,
+      .recovery-form .row,
+      .signup-form .row,
+      .preferences-form .row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .settings-form .row label,
+      .recovery-form .row label,
+      .signup-form .row label,
+      .preferences-form .row label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .auth-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .auth-btn,
+      .attachment-btn {
+        flex: 1;
+        background: rgba(61, 106, 243, 0.08);
+        color: var(--primary-deep);
+      }
+
+      .attachment-btn {
+        min-width: 54px;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        padding-inline: 12px;
+      }
+
+      .modal-message {
+        min-height: 18px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #d92d4c;
+      }
+
+      .modal-message.success {
+        color: #0d8a72;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 30px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .option-switch {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(67, 86, 126, 0.08);
+        box-shadow: 0 10px 18px rgba(30, 41, 59, 0.05);
+      }
+
+      .opt-btn {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+        padding: 9px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .opt-btn.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        color: white;
+        box-shadow: 0 8px 16px rgba(61, 106, 243, 0.2);
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 1.6px;
+        font-size: 0.72rem;
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 3rem);
+        line-height: 1.1;
+      }
+
+      .summary-box {
+        min-width: 120px;
+        padding: 14px 18px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #edf4ff, #eaefff);
+        border: 1px solid rgba(61, 106, 243, 0.1);
+        text-align: center;
+        box-shadow: var(--shadow);
+      }
+
+      .summary-box span {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+      }
+
+      .summary-box strong {
+        display: block;
+        font-size: 2rem;
+        margin-top: 8px;
+        color: var(--primary-deep);
+      }
+
+      .tree-wrap {
+        position: relative;
+      }
+
+      .tree-structure {
+        position: relative;
+        padding-top: 18px;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(102, 121, 176, 0.08);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 18px;
+      }
+
+      .root-node {
+        max-width: 440px;
+        margin: 0 auto 10px;
+        background: linear-gradient(135deg, rgba(79, 105, 232, 0.08), rgba(139, 92, 246, 0.05));
+      }
+
+      .teacher-node {
+        max-width: 470px;
+        margin: 0 auto 14px;
+      }
+
+      .leadership-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 28px;
+        max-width: 760px;
+        margin: 0 auto;
+      }
+
+      .branch-line {
+        position: relative;
+        width: 2px;
+        height: 48px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, rgba(47, 111, 237, 0.2), rgba(47, 111, 237, 0.7));
+      }
+
+      .branch-line-root {
+        height: 52px;
+      }
+
+      .branch-line::before,
+      .branch-line::after {
+        content: "";
+        position: absolute;
+        width: 84px;
+        height: 2px;
+        background: rgba(47, 111, 237, 0.65);
+        top: 50%;
+      }
+
+      .branch-line::before {
+        left: -84px;
+      }
+
+      .branch-line::after {
+        right: -84px;
+      }
+
+      .photo-box {
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: white;
+        letter-spacing: 0.06em;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+      }
+
+      .gradient-root {
+        background: linear-gradient(135deg, #4d7bff, #3358d6);
+      }
+
+      .gradient-teacher {
+        background: linear-gradient(135deg, #8d5cf6, #6d57d6);
+      }
+
+      .gradient-km {
+        background: linear-gradient(135deg, #1aab8f, #0c8c72);
+      }
+
+      .gradient-waka {
+        background: linear-gradient(135deg, #f4a623, #eb7d22);
+      }
+
+      .card-copy {
+        flex: 1;
+      }
+
+      .label {
+        margin: 0 0 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .card h2,
+      .card h3 {
+        margin: 0;
+        font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+      }
+
+      .meta {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .tag-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag-list li {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(47, 111, 237, 0.08);
+        color: var(--primary-deep);
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+
+      .member-section {
+        margin-top: 44px;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+
+      .search-box {
+        width: min(100%, 420px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.95);
+        border: 1px solid rgba(69, 92, 149, 0.08);
+        border-radius: 999px;
+        padding: 12px 16px;
+        box-shadow: 0 12px 24px rgba(15, 26, 44, 0.05);
+      }
+
+      .search-box input {
+        width: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.96rem;
+        color: var(--text);
+      }
+
+      .search-box span {
+        font-size: 1.1rem;
+        opacity: 0.7;
+      }
+
+      .section-title-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 18px;
+      }
+
+      .section-tag {
+        padding: 8px 18px;
+        background: rgba(47, 111, 237, 0.1);
+        border: 1px solid rgba(47, 111, 237, 0.12);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--primary-deep);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .student-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+
+      .dynamic-structure {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 18px;
+        margin: 26px 0 36px;
+      }
+
+      .user-driven .legacy-structure {
+        display: none;
+      }
+
+      .structure-empty {
+        grid-column: 1 / -1;
+        padding: 30px 20px;
+        border: 1px dashed rgba(61, 106, 243, 0.28);
+        border-radius: 18px;
+        background: rgba(255,255,255,0.62);
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .dynamic-role-card {
+        min-height: 150px;
+        padding: 18px;
+        border: 1px solid rgba(69, 92, 149, 0.1);
+        border-radius: 20px;
+        background: rgba(255,255,255,0.92);
+        box-shadow: 0 12px 24px rgba(18, 28, 56, 0.06);
+      }
+
+      .dynamic-role-card h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .dynamic-role-label {
+        margin: 0 0 8px;
+        color: var(--primary-deep);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .dynamic-role-card p:last-child {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      .user-roster {
+        margin: 24px 0 30px;
+      }
+
+      .user-roster-title {
+        margin: 0 0 14px;
+        text-align: center;
+        color: var(--primary-deep);
+        font-size: 0.86rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .user-card {
+        position: relative;
+        min-height: 148px;
+        padding: 16px;
+        border: 1px solid rgba(69, 92, 149, 0.1);
+        border-radius: 18px;
+        background: rgba(255,255,255,0.86);
+        box-shadow: 0 10px 22px rgba(18, 28, 56, 0.05);
+      }
+
+      .user-card-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .user-card-avatar {
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 14px;
+        color: white;
+        font-weight: 800;
+      }
+
+      .user-card h4 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .user-card-role {
+        margin: 3px 0 0;
+        color: var(--primary-deep);
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .user-card-bio {
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .user-card-self {
+        border-color: rgba(61, 106, 243, 0.35);
+        box-shadow: 0 0 0 4px rgba(61, 106, 243, 0.08), 0 10px 22px rgba(18, 28, 56, 0.05);
+      }
+
+      .user-card-edit {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        border: none;
+        border-radius: 8px;
+        padding: 5px 8px;
+        background: rgba(61, 106, 243, 0.1);
+        color: var(--primary-deep);
+        font-size: 0.66rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .member-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        border-radius: 22px;
+        padding: 16px 16px 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+        border: 1px solid rgba(69, 92, 149, 0.08);
+        box-shadow: 0 12px 24px rgba(18, 28, 56, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .member-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 30px rgba(18, 28, 56, 0.09);
+      }
+
+      .member-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .member-photo {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .member-card h4 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .member-role {
+        margin: 4px 0 0;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .member-card .hobby-box {
+        margin-top: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .member-card .hobby-box span {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: rgba(47, 111, 237, 0.07);
+        color: var(--primary-deep);
+        font-size: 0.68rem;
+        font-weight: 600;
+      }
+
+      .member-card .role-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: white;
+      }
+
+      .badge-member {
+        background: rgba(47, 111, 237, 0.8);
+      }
+
+      .chat-widget {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 1000;
+      }
+
+      .chat-panel {
+        position: absolute;
+        right: 0;
+        bottom: 78px;
+        width: min(360px, calc(100vw - 28px));
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(66, 90, 145, 0.08);
+        border-radius: 22px;
+        box-shadow: 0 20px 36px rgba(21, 31, 52, 0.13);
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+        transition: all 0.22s ease;
+      }
+
+      .chat-widget.open .chat-panel {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .chat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        color: white;
+      }
+
+      .chat-header h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .chat-header-inner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .chat-header-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .chat-notification-btn {
+        position: relative;
+        width: 30px;
+        height: 30px;
+        border: 1px solid rgba(255,255,255,0.24);
+        border-radius: 50%;
+        background: rgba(255,255,255,0.12);
+        color: white;
+        cursor: pointer;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: #ff5d73;
+        color: white;
+        font-size: 0.62rem;
+        font-weight: 800;
+      }
+
+      .notification-badge[hidden] {
+        display: none;
+      }
+
+      .chat-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.7rem;
+        opacity: 0.9;
+      }
+
+      .chat-status::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #62f0b0;
+        box-shadow: 0 0 0 3px rgba(98, 240, 176, 0.18);
+      }
+
+      .online-panel {
+        padding: 12px 14px 0;
+        background: linear-gradient(180deg, #f9fbff 0%, #f4f7ff 100%);
+      }
+
+      .chat-section-label {
+        display: block;
+        margin: 2px 0 8px;
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 800;
+      }
+
+      .chat-groups-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-bottom: 12px;
+      }
+
+      .chat-group-btn {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        padding: 8px 9px;
+        border: 1px solid rgba(61, 106, 243, 0.1);
+        border-radius: 12px;
+        background: white;
+        color: var(--text);
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .chat-group-btn.active {
+        background: linear-gradient(135deg, rgba(61, 106, 243, 0.14), rgba(61, 106, 243, 0.06));
+        border-color: rgba(61, 106, 243, 0.32);
+        color: var(--primary-deep);
+      }
+
+      .chat-group-icon {
+        display: grid;
+        place-items: center;
+        width: 25px;
+        height: 25px;
+        flex: 0 0 auto;
+        border-radius: 8px;
+        background: rgba(61, 106, 243, 0.1);
+      }
+
+      .chat-group-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .chat-notification-toast {
+        position: fixed;
+        right: 24px;
+        bottom: 98px;
+        z-index: 1200;
+        max-width: min(320px, calc(100vw - 40px));
+        padding: 12px 15px;
+        border: 1px solid rgba(61, 106, 243, 0.14);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.97);
+        color: var(--text);
+        box-shadow: 0 16px 34px rgba(21, 31, 52, 0.16);
+        font-size: 0.82rem;
+        font-weight: 700;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .chat-notification-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .online-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .online-users-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .online-user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: white;
+        border: 1px solid rgba(61, 106, 243, 0.12);
+        color: var(--text);
+        font-size: 0.74rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .online-user-pill.active {
+        background: rgba(61, 106, 243, 0.1);
+        border-color: rgba(61, 106, 243, 0.2);
+        color: var(--primary-deep);
+      }
+
+      .online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2ec98b;
+        box-shadow: 0 0 0 3px rgba(46, 201, 139, 0.12);
+        flex-shrink: 0;
+      }
+
+      .online-user-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 0.62rem;
+        color: white;
+        font-weight: 700;
+      }
+
+      .chat-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 300px;
+        padding: 16px 14px;
+        overflow-y: auto;
+        background: linear-gradient(180deg, #f9fbff 0%, #f4f7ff 100%);
+      }
+
+      .chat-messages.dm-mode {
+        background: radial-gradient(circle at 100% 0%, rgba(61, 106, 243, 0.1), transparent 38%), linear-gradient(180deg, #f7f9ff 0%, #eef3ff 100%);
+      }
+
+      .message.bot {
+        border: 1px solid rgba(61, 106, 243, 0.08);
+      }
+
+      .message {
+        max-width: 82%;
+        padding: 11px 12px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        box-shadow: 0 8px 16px rgba(17, 24, 39, 0.04);
+      }
+
+      .message.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #4d7bff, #3358d6);
+        color: white;
+        border-bottom-right-radius: 5px;
+      }
+
+      .message.bot {
+        align-self: flex-start;
+        background: white;
+        color: var(--text);
+        border-bottom-left-radius: 5px;
+      }
+
+      .chat-form {
+        display: flex;
+        gap: 10px;
+        padding: 12px 14px 14px;
+        background: white;
+      }
+
+      .chat-form input {
+        flex: 1;
+        padding: 11px 12px;
+        border: 1px solid rgba(76, 95, 140, 0.14);
+        border-radius: 12px;
+        font-size: 0.9rem;
+        outline: none;
+      }
+
+      .chat-form input:focus {
+        border-color: rgba(61, 106, 243, 0.5);
+        box-shadow: 0 0 0 4px rgba(61, 106, 243, 0.08);
+      }
+
+      .chat-form button {
+        border: none;
+        border-radius: 12px;
+        padding: 0 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .chat-attachment-meta {
+        display: block;
+        margin: 0 14px 6px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        min-height: 14px;
+      }
+
+      .message-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        opacity: 0.85;
+        margin-bottom: 6px;
+      }
+
+      .message-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 9px;
+      }
+
+      .message-reaction-btn {
+        min-width: 27px;
+        height: 25px;
+        padding: 0 6px;
+        border: 1px solid rgba(61, 106, 243, 0.12);
+        border-radius: 999px;
+        background: rgba(61, 106, 243, 0.06);
+        color: var(--text);
+        font-size: 0.76rem;
+        cursor: pointer;
+      }
+
+      .message-reaction-btn:hover,
+      .message-reaction-btn.active {
+        background: rgba(61, 106, 243, 0.16);
+        border-color: rgba(61, 106, 243, 0.3);
+      }
+
+      .message-reaction-btn .reaction-count {
+        margin-left: 2px;
+        font-size: 0.66rem;
+        font-weight: 800;
+      }
+
+      .message-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(61, 106, 243, 0.08);
+        border: 1px solid rgba(61, 106, 243, 0.12);
+        border-radius: 10px;
+        padding: 8px 10px;
+        color: var(--primary-deep);
+        text-decoration: none;
+        margin-top: 8px;
+      }
+
+      .message-image,
+      .message-video {
+        display: block;
+        max-width: 220px;
+        border-radius: 12px;
+        margin-top: 8px;
+      }
+
+      .message-video {
+        background: #0f172a;
+      }
+
+      .message.system {
+        align-self: center;
+        background: rgba(61, 106, 243, 0.08);
+        color: var(--primary-deep);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .profile-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        border-radius: 999px;
+        background: rgba(61, 106, 243, 0.08);
+        color: var(--primary-deep);
+        padding: 8px 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .profile-avatar-mini {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+      }
+
+      .profile-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        padding: 16px;
+        background: rgba(9, 16, 29, 0.62);
+        backdrop-filter: blur(8px);
+        z-index: 2200;
+      }
+
+      .profile-modal.open {
+        display: grid;
+      }
+
+      .profile-dialog {
+        width: min(92vw, 440px);
+        background: rgba(255,255,255,0.98);
+        border-radius: 24px;
+        border: 1px solid rgba(59, 76, 120, 0.08);
+        box-shadow: 0 26px 60px rgba(15, 20, 35, 0.2);
+        padding: 20px 20px 18px;
+      }
+
+      .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .profile-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .profile-summary .meta {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .profile-avatar-preview {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        margin: 0 auto 8px;
+      }
+
+      .chat-channel-switch {
+        display: inline-flex;
+        gap: 6px;
+        padding: 5px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.14);
+        margin-bottom: 10px;
+      }
+
+      .chat-channel-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: transparent;
+        color: rgba(255,255,255,0.8);
+        cursor: pointer;
+      }
+
+      .chat-channel-btn.active {
+        background: rgba(255,255,255,0.2);
+        color: white;
+      }
+
+      .chat-toggle {
+        width: 62px;
+        height: 62px;
+        border: none;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4d7bff, #3358d6);
+        color: white;
+        font-size: 1.4rem;
+        cursor: pointer;
+        box-shadow: 0 16px 30px rgba(61, 106, 243, 0.28);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .chat-toggle:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 18px 36px rgba(61, 106, 243, 0.32);
+      }
+
+      .chat-toggle.has-unread::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        border: 3px solid white;
+        border-radius: 50%;
+        background: #ff5d73;
+      }
+
+      body.option-2 {
+        background: linear-gradient(180deg, #f4f1ea 0%, #f7fafc 100%);
+      }
+
+      body.option-2 .chat-header {
+        background: linear-gradient(135deg, #f7a41d, #eb7d22);
+      }
+
+      body.option-2 .chat-form button,
+      body.option-2 .chat-toggle {
+        background: linear-gradient(135deg, #f7a41d, #eb7d22);
+      }
+
+      body.option-2 .chat-toggle {
+        box-shadow: 0 16px 30px rgba(247, 164, 29, 0.24);
+      }
+
+      body.option-2 .message.user {
+        background: linear-gradient(135deg, #f7a41d, #eb7d22);
+      }
+
+      body.option-2 .message.bot {
+        background: #fff7eb;
+      }
+
+      body.option-2 .chat-panel {
+        border-color: rgba(120, 92, 44, 0.1);
+      }
+
+      body.option-2 .chat-messages {
+        background: linear-gradient(180deg, #fffdf9 0%, #fff7eb 100%);
+      }
+
+      body.option-2 .page-shell {
+        max-width: 1200px;
+      }
+
+      body.option-2 .topbar {
+        margin-bottom: 22px;
+      }
+
+      body.option-2 .summary-box {
+        background: linear-gradient(135deg, #fff7ea, #fff1d7);
+        border: 1px solid rgba(247, 164, 29, 0.15);
+      }
+
+      body.option-2 .root-node,
+      body.option-2 .teacher-node,
+      body.option-2 .card {
+        box-shadow: 0 14px 25px rgba(62, 46, 20, 0.08);
+      }
+
+      body.option-2 .root-node {
+        background: linear-gradient(135deg, rgba(122, 95, 32, 0.08), rgba(76, 116, 68, 0.05));
+      }
+
+      body.option-2 .leadership-row {
+        max-width: 840px;
+      }
+
+      body.option-2 .member-card {
+        background: linear-gradient(180deg, #fffdf9 0%, #f9f7f2 100%);
+        border: 1px solid rgba(113, 89, 44, 0.08);
+      }
+
+      body.option-2 .member-card .hobby-box span {
+        background: rgba(122, 95, 32, 0.08);
+        color: #7b5a1a;
+      }
+
+      body.option-3 {
+        background: linear-gradient(180deg, #f0fdfb 0%, #f9fafc 100%);
+      }
+
+      body.option-3 .chat-header {
+        background: linear-gradient(135deg, #00a788, #008d7e);
+      }
+
+      body.option-3 .chat-form button,
+      body.option-3 .chat-toggle {
+        background: linear-gradient(135deg, #00a788, #008d7e);
+      }
+
+      body.option-3 .chat-toggle {
+        box-shadow: 0 16px 30px rgba(0, 167, 136, 0.24);
+      }
+
+      body.option-3 .message.user {
+        background: linear-gradient(135deg, #00a788, #008d7e);
+      }
+
+      body.option-3 .message.bot {
+        background: #ecfffb;
+      }
+
+      body.option-3 .summary-box {
+        background: linear-gradient(135deg, #ebfffb, #dffaf6);
+        border: 1px solid rgba(0, 167, 136, 0.18);
+      }
+
+      body.option-3 .root-node {
+        background: linear-gradient(135deg, rgba(0, 167, 136, 0.08), rgba(84, 123, 255, 0.06));
+      }
+
+      body.option-3 .member-card .hobby-box span {
+        background: rgba(0, 167, 136, 0.08);
+        color: #0d7665;
+      }
+
+      @media (max-width: 640px) {
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .header-actions {
+          width: 100%;
+          flex-wrap: wrap;
+        }
+
+        .leadership-row {
+          grid-template-columns: 1fr;
+        }
+
+        .teacher-node,
+        .card {
+          max-width: 100%;
+        }
+
+        .student-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chat-widget {
+          right: 14px;
+          bottom: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body class="option-1 locked">
+    <div class="login-overlay" id="loginOverlay">
+      <div class="login-card">
+        <span class="lock-badge">Portal Kelas</span>
+        <p class="school-name">MTs Assa'Idiyyah</p>
+        <p class="class-name">Kelas 9.1</p>
+        <h2>Login Kelas IX.1</h2>
+        <p>Masukkan username dan sandi untuk membuka halaman pohon keluarga.</p>
+
+        <form class="login-form" id="loginForm" action="javascript:void(0)">
+          <div>
+            <label class="field-label" for="loginUsername">Username</label>
+            <input id="loginUsername" type="text" placeholder="Masukkan username" autocomplete="off" aria-label="Username login" />
+          </div>
+
+          <div>
+            <label class="field-label" for="loginPassword">Sandi</label>
+            <div class="password-wrap">
+              <input id="loginPassword" type="password" placeholder="Masukkan sandi" autocomplete="off" aria-label="Sandi login" />
+              <button class="toggle-password" id="togglePassword" type="button" aria-label="Tampilkan atau sembunyikan sandi">👁️</button>
+            </div>
+          </div>
+
+          <button type="submit">Masuk</button>
+          <div class="auth-actions">
+            <button class="auth-btn" id="createProfileBtn" type="button">Buat Akun</button>
+            <button class="secondary-btn" id="forgotPasswordBtn" type="button">Lupa sandi?</button>
+          </div>
+        </form>
+
+        <p class="login-error" id="loginError" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <div class="signup-modal" id="signupModal" aria-hidden="true">
+      <div class="signup-dialog" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+        <div class="dialog-header">
+          <h3 id="signupTitle">Buat Profil Baru</h3>
+          <button class="close-modal" type="button" id="closeSignupModal" aria-label="Tutup pendaftaran profil">✕</button>
+        </div>
+
+        <form class="signup-form" id="signupForm" action="javascript:void(0)">
+          <div class="row">
+            <label for="signupName">Nama lengkap</label>
+            <input id="signupName" type="text" placeholder="Masukkan nama lengkap" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="signupUsername">Username</label>
+            <input id="signupUsername" type="text" placeholder="Masukkan username" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="signupPassword">Sandi</label>
+            <input id="signupPassword" type="password" placeholder="Masukkan sandi" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="signupRole">Peran di kelas</label>
+            <select id="signupRole">
+              <option value="student">Siswa</option>
+              <option value="teacher">Wali Kelas</option>
+              <option value="class-leader">Ketua Murid</option>
+              <option value="vice-class-leader">Wakil Ketua Murid</option>
+              <option value="treasurer-1">Bendahara 1</option>
+              <option value="treasurer-2">Bendahara 2</option>
+              <option value="secretary-1">Sekretaris 1</option>
+              <option value="secretary-2">Sekretaris 2</option>
+              <option value="security">Keamanan</option>
+              <option value="cleanliness">Kebersihan</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="signupColor">Warna profil</label>
+            <input id="signupColor" type="color" value="#3d6af3" />
+          </div>
+
+          <button type="submit">Buat Akun</button>
+          <div class="modal-message" id="signupMessage" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="recovery-modal" id="recoveryModal" aria-hidden="true">
+      <div class="recovery-dialog" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+        <div class="dialog-header">
+          <h3 id="recoveryTitle">Reset Sandi</h3>
+          <button class="close-modal" type="button" id="closeRecoveryModal" aria-label="Tutup reset sandi">✕</button>
+        </div>
+
+        <form class="recovery-form" id="recoveryForm" action="javascript:void(0)">
+          <div class="row">
+            <label for="recoveryUsername">Username</label>
+            <input id="recoveryUsername" type="text" placeholder="Masukkan username" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="recoveryPassword">Sandi baru</label>
+            <input id="recoveryPassword" type="password" placeholder="Masukkan sandi baru" autocomplete="off" />
+          </div>
+
+          <button type="submit">Reset Sandi</button>
+          <div class="modal-message" id="recoveryMessage" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="settings-modal" id="changePasswordModal" aria-hidden="true">
+      <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">
+        <div class="dialog-header">
+          <h3 id="changePasswordTitle">Ubah Sandi</h3>
+          <button class="close-modal" type="button" id="closePasswordModal" aria-label="Tutup pengaturan sandi">✕</button>
+        </div>
+
+        <form class="settings-form" id="changePasswordForm" action="javascript:void(0)">
+          <div class="row">
+            <label for="oldPassword">Sandi lama</label>
+            <input id="oldPassword" type="password" placeholder="Masukkan sandi lama" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="newPassword">Sandi baru</label>
+            <input id="newPassword" type="password" placeholder="Masukkan sandi baru" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="confirmPassword">Konfirmasi sandi baru</label>
+            <input id="confirmPassword" type="password" placeholder="Ulangi sandi baru" autocomplete="off" />
+          </div>
+
+          <button type="submit">Simpan Sandi Baru</button>
+          <div class="modal-message" id="modalMessage" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="preferences-modal" id="preferencesModal" aria-hidden="true">
+      <div class="preferences-dialog" role="dialog" aria-modal="true" aria-labelledby="preferencesTitle">
+        <div class="dialog-header">
+          <h3 id="preferencesTitle">Pengaturan</h3>
+          <button class="close-modal" type="button" id="closePreferencesModal" aria-label="Tutup pengaturan">✕</button>
+        </div>
+        <form class="preferences-form" id="preferencesForm" action="javascript:void(0)">
+          <div class="row">
+            <label for="themePreference">Tema tampilan</label>
+            <select id="themePreference">
+              <option value="custom">Tema kustom</option>
+              <option value="1">Biru modern</option>
+              <option value="2">Hangat</option>
+              <option value="3">Hijau segar</option>
+            </select>
+          </div>
+          <div class="custom-theme-fields">
+            <label class="custom-color-field">Warna utama<input id="customPrimaryColor" type="color" value="#3d6af3" /></label>
+            <label class="custom-color-field">Latar halaman<input id="customBackgroundColor" type="color" value="#eff5ff" /></label>
+            <label class="custom-color-field">Warna teks<input id="customTextColor" type="color" value="#1e2430" /></label>
+          </div>
+          <button class="drawing-launch-btn" id="openDrawingBtn" type="button">🎨 Buka Studio Gambar</button>
+          <label class="preference-toggle">
+            <span class="preference-copy"><strong>Notifikasi chat</strong><span>Tampilkan badge pesan baru.</span></span>
+            <input id="notificationsPreference" type="checkbox" checked />
+          </label>
+          <label class="preference-toggle">
+            <span class="preference-copy"><strong>Mode chat ringkas</strong><span>Gunakan ruang pesan yang lebih kecil.</span></span>
+            <input id="compactChatPreference" type="checkbox" />
+          </label>
+          <button type="submit">Simpan Pengaturan</button>
+          <div class="modal-message" id="preferencesMessage" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="drawing-modal" id="drawingModal" aria-hidden="true">
+      <div class="drawing-dialog" role="dialog" aria-modal="true" aria-labelledby="drawingTitle">
+        <div class="dialog-header">
+          <h3 id="drawingTitle">Studio Gambar</h3>
+          <button class="close-modal" type="button" id="closeDrawingBtn" aria-label="Tutup studio gambar">✕</button>
+        </div>
+        <div class="drawing-toolbar">
+          <label>Warna <input id="drawingColor" type="color" value="#3d6af3" /></label>
+          <label>Ukuran <input id="drawingSize" type="range" min="1" max="40" value="5" /></label>
+          <button class="drawing-action-btn" id="clearDrawingBtn" type="button">Bersihkan</button>
+          <button class="drawing-action-btn" id="saveDrawingBtn" type="button">Simpan gambar</button>
+          <button class="drawing-action-btn" id="useDrawingBackgroundBtn" type="button">Jadikan background</button>
+        </div>
+        <canvas id="drawingCanvas" width="1200" height="650"></canvas>
+        <div class="modal-message" id="drawingMessage" aria-live="polite"></div>
+        <div class="drawing-saved-list" id="savedDrawingList"></div>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="school-name">MTs Assa'Idiyyah</p>
+          <p class="class-name">Kelas 9.1</p>
+          <p class="eyebrow">Sistem Informasi Kelas</p>
+          <h1>Pohon Keluarga Kelas IX.1</h1>
+        </div>
+        <div class="header-actions">
+          <button class="profile-button" id="profileButton" type="button">
+            <span class="profile-avatar-mini" id="profileAvatarMini">A</span>
+            <span id="profileNameLabel">Admin Kelas</span>
+          </button>
+          <div class="summary-box">
+            <span>Pengguna kelas</span>
+            <strong id="totalUserCount">0/33</strong>
+          </div>
+          <div class="option-switch" aria-label="Pilihan tampilan">
+            <button class="opt-btn active" type="button" data-option="1">Opsi 1</button>
+            <button class="opt-btn" type="button" data-option="2">Opsi 2</button>
+            <button class="opt-btn" type="button" data-option="3">Opsi 3</button>
+          </div>
+          <button class="secondary-btn" id="changePasswordBtn" type="button">Ubah Sandi</button>
+          <button class="secondary-btn" id="preferencesBtn" type="button">Pengaturan</button>
+          <button class="logout-btn" id="logoutBtn" type="button">Keluar</button>
+        </div>
+      </header>
+
+      <main class="tree-wrap">
+        <section class="tree-structure">
+          <div class="root-node card role-root legacy-structure">
+            <div class="photo-box gradient-root">IX</div>
+            <div class="card-copy">
+              <p class="label">Kelas</p>
+              <h2>IX-A</h2>
+              <p class="meta">Struktur kelas 9.1 MTs Assa'Idiyyah</p>
+            </div>
+          </div>
+
+          <div class="branch-line branch-line-root legacy-structure"></div>
+
+          <div class="teacher-node card role-teacher legacy-structure">
+            <div class="photo-box gradient-teacher">W</div>
+            <div class="card-copy">
+              <p class="label">Wali Kelas</p>
+              <h2>Wigati, S.Pd.</h2>
+              <p class="meta">Pembina dan pengarah kelas</p>
+            </div>
+          </div>
+
+          <div class="branch-line legacy-structure"></div>
+
+          <div class="leadership-row legacy-structure">
+            <article class="card role-km">
+              <div class="photo-box gradient-km">KM</div>
+              <div class="card-copy">
+                <p class="label">Ketua Murid</p>
+                <h3>Rafi Ramadhan</h3>
+                <ul class="tag-list">
+                  <li>Disiplin</li>
+                  <li>Organisasi</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="card role-waka">
+              <div class="photo-box gradient-waka">WK</div>
+              <div class="card-copy">
+                <p class="label">Wakil Ketua Murid</p>
+                <h3>Amelia Putri</h3>
+                <ul class="tag-list">
+                  <li>Komunikatif</li>
+                  <li>Koordinasi</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+
+          <div id="dynamic-structure" class="dynamic-structure"></div>
+
+          <div class="member-section">
+            <div class="toolbar">
+              <div class="search-box">
+                <span>🔎</span>
+                <input id="searchInput" type="text" placeholder="Cari nama murid..." />
+              </div>
+            </div>
+            <div class="section-title-wrap">
+              <span class="section-tag">Anggota Kelas</span>
+            </div>
+            <section class="user-roster" aria-labelledby="userRosterTitle">
+              <h3 class="user-roster-title" id="userRosterTitle">Profil Pengguna Kelas</h3>
+              <div id="user-grid" class="student-grid"></div>
+            </section>
+            <div id="student-grid" class="student-grid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="profile-modal" id="profileModal" aria-hidden="true">
+      <div class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+        <div class="dialog-header">
+          <h3 id="profileTitle">Profil Saya</h3>
+          <button class="close-modal" type="button" id="closeProfileModal" aria-label="Tutup profil">✕</button>
+        </div>
+
+        <form class="profile-form" id="profileForm" action="javascript:void(0)">
+          <div class="profile-summary">
+            <div class="profile-avatar-preview" id="profileAvatarPreview">A</div>
+            <div id="profileSummaryName" class="title">Nama</div>
+            <div id="profileSummaryUsername" class="meta">@username</div>
+          </div>
+
+          <div class="row">
+            <label for="profileNameInput">Nama lengkap</label>
+            <input id="profileNameInput" type="text" placeholder="Masukkan nama lengkap" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <label for="profileBioInput">Bio</label>
+            <textarea id="profileBioInput" rows="3" placeholder="Ceritakan sedikit tentang diri Anda"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="profileAvatarInput">Foto profil</label>
+            <input id="profileAvatarInput" type="file" accept="image/*" />
+          </div>
+
+          <button type="submit">Simpan Profil</button>
+          <div class="modal-message" id="profileMessage" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="chat-widget" id="chatWidget">
+      <div class="chat-panel" aria-live="polite">
+        <div class="chat-header">
+          <div class="chat-header-inner">
+            <h3 id="chatTitle">Chat Kelas</h3>
+          </div>
+          <div class="chat-header-tools">
+            <button class="chat-notification-btn" id="chatNotificationBtn" type="button" aria-label="Tandai semua notifikasi sudah dibaca">🔔<span class="notification-badge" id="chatNotificationBadge" hidden>0</span></button>
+            <span class="chat-status">Online</span>
+          </div>
+        </div>
+        <div class="online-panel">
+          <div class="chat-channel-switch" aria-label="Pilih kanal chat">
+            <button class="chat-channel-btn active" type="button" data-channel="group">Grup</button>
+            <button class="chat-channel-btn" type="button" data-channel="dm">DM</button>
+          </div>
+          <span class="chat-section-label" id="chatGroupLabel">Ruang grup</span>
+          <div class="chat-groups-list" id="chatGroupsList"></div>
+          <span class="online-label">Online</span>
+          <div class="online-users-list" id="onlineUsersList"></div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-attachment-meta" id="chatAttachmentMeta"></div>
+        <form class="chat-form" id="chatForm" action="javascript:void(0)">
+          <input id="chatInput" type="text" placeholder="Ketik pesan Anda..." autocomplete="off" />
+          <input id="chatFileInput" type="file" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" hidden />
+          <button class="attachment-btn" id="chatAttachmentBtn" type="button" aria-label="Lampirkan file">📎</button>
+          <button class="chat-send-btn" type="submit">Kirim</button>
+        </form>
+      </div>
+      <button class="chat-toggle" id="chatToggle" type="button" aria-label="Buka chat">💬</button>
+    </div>
+    <div class="chat-notification-toast" id="chatNotificationToast" role="status" aria-live="polite"></div>
+
+    <script>
+      const DEFAULT_USERNAME = 'kelas91';
+      const DEFAULT_PASSWORD = 'kelas91';
+      const MAX_USERS = 33;
+      const STORAGE_KEY = 'kelasIX1Unlocked';
+      const USERS_KEY = 'kelasIX1Users';
+      const ACTIVE_USER_KEY = 'kelasIX1ActiveUser';
+      const CHAT_KEY = 'kelasIX1ChatMessages';
+      const CREDENTIAL_KEY = 'kelasIX1Credentials';
+      const PREFERENCES_KEY = 'kelasIX1Preferences';
+      const DRAWINGS_KEY = 'kelasIX1SavedDrawings';
+      const ACTIVE_CHAT_TARGET_KEY = 'kelasIX1ActiveChatTarget';
+      const ACTIVE_CHAT_CHANNEL_KEY = 'kelasIX1ActiveChatChannel';
+      const ACTIVE_CHAT_GROUP_KEY = 'kelasIX1ActiveChatGroup';
+      const CHAT_READ_KEY = 'kelasIX1ChatReadAt';
+      const REACTION_OPTIONS = ['👍', '❤️', '😂', '👏'];
+      const ONLINE_STATUS_TTL = 45000;
+      const CHAT_GROUPS = [
+        { id: 'class', name: 'Kelas IX-1', icon: '🏫' },
+        { id: 'study', name: 'Belajar Bareng', icon: '📚' },
+        { id: 'committee', name: 'Pengurus Kelas', icon: '⭐' },
+        { id: 'creative', name: 'Karya & Kreatif', icon: '🎨' }
+      ];
+
+      const loginForm = document.getElementById('loginForm');
+      const loginUsername = document.getElementById('loginUsername');
+      const loginPassword = document.getElementById('loginPassword');
+      const loginError = document.getElementById('loginError');
+      const loginCard = document.querySelector('.login-card');
+      const togglePasswordBtn = document.getElementById('togglePassword');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+      const createProfileBtn = document.getElementById('createProfileBtn');
+      const signupModal = document.getElementById('signupModal');
+      const closeSignupModalBtn = document.getElementById('closeSignupModal');
+      const signupForm = document.getElementById('signupForm');
+      const signupName = document.getElementById('signupName');
+      const signupUsername = document.getElementById('signupUsername');
+      const signupPassword = document.getElementById('signupPassword');
+      const signupRole = document.getElementById('signupRole');
+      const signupColor = document.getElementById('signupColor');
+      const signupMessage = document.getElementById('signupMessage');
+      const recoveryModal = document.getElementById('recoveryModal');
+      const closeRecoveryModalBtn = document.getElementById('closeRecoveryModal');
+      const recoveryForm = document.getElementById('recoveryForm');
+      const recoveryUsername = document.getElementById('recoveryUsername');
+      const recoveryPassword = document.getElementById('recoveryPassword');
+      const recoveryMessage = document.getElementById('recoveryMessage');
+      const changePasswordBtn = document.getElementById('changePasswordBtn');
+      const preferencesBtn = document.getElementById('preferencesBtn');
+      const preferencesModal = document.getElementById('preferencesModal');
+      const closePreferencesModalBtn = document.getElementById('closePreferencesModal');
+      const preferencesForm = document.getElementById('preferencesForm');
+      const themePreference = document.getElementById('themePreference');
+      const notificationsPreference = document.getElementById('notificationsPreference');
+      const compactChatPreference = document.getElementById('compactChatPreference');
+      const preferencesMessage = document.getElementById('preferencesMessage');
+      const customPrimaryColor = document.getElementById('customPrimaryColor');
+      const customBackgroundColor = document.getElementById('customBackgroundColor');
+      const customTextColor = document.getElementById('customTextColor');
+      const openDrawingBtn = document.getElementById('openDrawingBtn');
+      const drawingModal = document.getElementById('drawingModal');
+      const closeDrawingBtn = document.getElementById('closeDrawingBtn');
+      const drawingCanvas = document.getElementById('drawingCanvas');
+      const drawingColor = document.getElementById('drawingColor');
+      const drawingSize = document.getElementById('drawingSize');
+      const clearDrawingBtn = document.getElementById('clearDrawingBtn');
+      const saveDrawingBtn = document.getElementById('saveDrawingBtn');
+      const useDrawingBackgroundBtn = document.getElementById('useDrawingBackgroundBtn');
+      const drawingMessage = document.getElementById('drawingMessage');
+      const savedDrawingList = document.getElementById('savedDrawingList');
+      const changePasswordModal = document.getElementById('changePasswordModal');
+      const closePasswordModalBtn = document.getElementById('closePasswordModal');
+      const changePasswordForm = document.getElementById('changePasswordForm');
+      const oldPasswordInput = document.getElementById('oldPassword');
+      const newPasswordInput = document.getElementById('newPassword');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const modalMessage = document.getElementById('modalMessage');
+      const profileButton = document.getElementById('profileButton');
+      const profileNameLabel = document.getElementById('profileNameLabel');
+      const profileAvatarMini = document.getElementById('profileAvatarMini');
+      const profileModal = document.getElementById('profileModal');
+      const closeProfileModalBtn = document.getElementById('closeProfileModal');
+      const profileForm = document.getElementById('profileForm');
+      const profileNameInput = document.getElementById('profileNameInput');
+      const profileBioInput = document.getElementById('profileBioInput');
+      const profileAvatarInput = document.getElementById('profileAvatarInput');
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const profileSummaryName = document.getElementById('profileSummaryName');
+      const profileSummaryUsername = document.getElementById('profileSummaryUsername');
+      const profileMessage = document.getElementById('profileMessage');
+      const chatTitle = document.getElementById('chatTitle');
+      const onlineUsersList = document.getElementById('onlineUsersList');
+      const chatWidget = document.getElementById('chatWidget');
+      const chatToggle = document.getElementById('chatToggle');
+      const chatInput = document.getElementById('chatInput');
+      const chatFileInput = document.getElementById('chatFileInput');
+      const chatAttachmentBtn = document.getElementById('chatAttachmentBtn');
+      const chatAttachmentMeta = document.getElementById('chatAttachmentMeta');
+      const chatMessages = document.getElementById('chatMessages');
+      const chatGroupsList = document.getElementById('chatGroupsList');
+      const chatGroupLabel = document.getElementById('chatGroupLabel');
+      const chatNotificationBtn = document.getElementById('chatNotificationBtn');
+      const chatNotificationBadge = document.getElementById('chatNotificationBadge');
+      const chatNotificationToast = document.getElementById('chatNotificationToast');
+      const totalUserCount = document.getElementById('totalUserCount');
+      const treeStructure = document.querySelector('.tree-structure');
+      const dynamicStructure = document.getElementById('dynamic-structure');
+
+      const defaultUser = {
+        id: 'default-user',
+        name: 'Admin Kelas',
+        username: DEFAULT_USERNAME,
+        password: DEFAULT_PASSWORD,
+        color: '#3d6af3',
+        avatar: '',
+        bio: 'Ketua kelas yang selalu menjaga semangat belajar dan komunikasi.',
+        role: 'system',
+        showInStructure: false,
+        online: true,
+        lastSeen: Date.now()
+      };
+
+      const getUsers = () => {
+        const saved = localStorage.getItem(USERS_KEY);
+
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length) {
+              parsed.forEach((user) => {
+                if (user.username === DEFAULT_USERNAME) user.role = 'system';
+                if (!user.role) user.role = 'student';
+                if (!user.bio) user.bio = 'Belum ada bio.';
+                if (typeof user.showInStructure !== 'boolean') user.showInStructure = user.username !== DEFAULT_USERNAME;
+              });
+              return parsed;
+            }
+          } catch (error) {
+            console.warn('Format user tidak valid:', error);
+          }
+        }
+
+        const fallback = [defaultUser];
+        localStorage.setItem(USERS_KEY, JSON.stringify(fallback));
+        return fallback;
+      };
+
+      const saveUsers = (users) => {
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      };
+
+      const getInitials = (name = '') => {
+        return name
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0])
+          .join('')
+          .toUpperCase() || 'A';
+      };
+
+      const getActiveUser = () => {
+        const saved = localStorage.getItem(ACTIVE_USER_KEY);
+        if (!saved) return null;
+
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.username) return parsed;
+        } catch (error) {
+          console.warn('Format pengguna aktif tidak valid:', error);
+        }
+
+        localStorage.removeItem(ACTIVE_USER_KEY);
+        return null;
+      };
+
+      const setActiveUser = (user) => {
+        localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(user));
+      };
+
+      const clearActiveUser = () => {
+        localStorage.removeItem(ACTIVE_USER_KEY);
+      };
+
+      const getCredentials = () => {
+        const users = getUsers();
+        const profile = users.find((user) => user.username === DEFAULT_USERNAME) || defaultUser;
+        return { username: profile.username, password: profile.password };
+      };
+
+      const saveCredentials = (username, password) => {
+        const users = getUsers();
+        const target = users.find((user) => user.username === username);
+
+        if (target) {
+          target.password = password;
+          saveUsers(users);
+        }
+
+        localStorage.setItem(CREDENTIAL_KEY, JSON.stringify({ username, password }));
+      };
+
+      const setLoginState = (message = '', type = '') => {
+        loginError.textContent = message;
+        loginCard.classList.remove('is-error', 'is-success');
+        if (type) {
+          loginCard.classList.add(type);
+        }
+      };
+
+      const setProfileMessage = (message = '', isSuccess = false) => {
+        profileMessage.textContent = message;
+        profileMessage.classList.toggle('success', isSuccess);
+      };
+
+      const setModalMessage = (message = '', isSuccess = false) => {
+        modalMessage.textContent = message;
+        modalMessage.classList.toggle('success', isSuccess);
+      };
+
+      const setRecoveryMessage = (message = '', isSuccess = false) => {
+        recoveryMessage.textContent = message;
+        recoveryMessage.classList.toggle('success', isSuccess);
+      };
+
+      const setSignupMessage = (message = '', isSuccess = false) => {
+        signupMessage.textContent = message;
+        signupMessage.classList.toggle('success', isSuccess);
+      };
+
+      const getPreferences = () => {
+        try {
+          return {
+            theme: '1',
+            notifications: true,
+            compactChat: false,
+            primary: '#3d6af3',
+            background: '#eff5ff',
+            text: '#1e2430',
+            backgroundImage: '',
+            ...JSON.parse(localStorage.getItem(PREFERENCES_KEY) || '{}')
+          };
+        } catch (error) {
+          return { theme: '1', notifications: true, compactChat: false };
+        }
+      };
+
+      const openPreferencesModal = () => {
+        const preferences = getPreferences();
+        themePreference.value = preferences.theme;
+        customPrimaryColor.value = preferences.primary;
+        customBackgroundColor.value = preferences.background;
+        customTextColor.value = preferences.text;
+        notificationsPreference.checked = preferences.notifications;
+        compactChatPreference.checked = preferences.compactChat;
+        preferencesMessage.textContent = '';
+        preferencesMessage.classList.remove('success');
+        preferencesModal.classList.add('open');
+        preferencesModal.setAttribute('aria-hidden', 'false');
+      };
+
+      const closePreferencesModal = () => {
+        preferencesModal.classList.remove('open');
+        preferencesModal.setAttribute('aria-hidden', 'true');
+      };
+
+      const applyVisualPreferences = () => {
+        const preferences = getPreferences();
+        if (preferences.theme === 'custom') {
+          document.body.classList.remove('option-1', 'option-2', 'option-3');
+          document.documentElement.style.setProperty('--primary', preferences.primary);
+          document.documentElement.style.setProperty('--primary-deep', preferences.primary);
+          document.documentElement.style.setProperty('--text', preferences.text);
+          document.body.style.background = preferences.backgroundImage
+            ? `linear-gradient(rgba(245,247,251,0.78), rgba(249,250,252,0.86)), url(${preferences.backgroundImage}) center/cover fixed`
+            : `linear-gradient(180deg, ${preferences.background} 0%, #f9fafc 100%)`;
+        } else {
+          document.documentElement.style.removeProperty('--primary');
+          document.documentElement.style.removeProperty('--primary-deep');
+          document.documentElement.style.removeProperty('--text');
+          document.body.style.removeProperty('background');
+          applyOption(preferences.theme);
+        }
+        chatWidget.classList.toggle('compact', preferences.compactChat);
+        renderChatNotifications();
+      };
+
+      const drawingContext = drawingCanvas.getContext('2d');
+      let isDrawing = false;
+
+      const clearDrawingCanvas = () => {
+        drawingContext.fillStyle = '#ffffff';
+        drawingContext.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      };
+
+      const getSavedDrawings = () => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(DRAWINGS_KEY) || '[]');
+          return Array.isArray(saved) ? saved : [];
+        } catch (error) {
+          return [];
+        }
+      };
+
+      const renderSavedDrawings = () => {
+        savedDrawingList.innerHTML = '';
+        getSavedDrawings().slice().reverse().forEach((drawing) => {
+          const card = document.createElement('div');
+          card.className = 'saved-drawing';
+          const image = document.createElement('img');
+          image.src = drawing.dataUrl;
+          image.alt = drawing.name;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = 'Pakai sebagai background';
+          button.addEventListener('click', () => {
+            const preferences = getPreferences();
+            preferences.theme = 'custom';
+            preferences.backgroundImage = drawing.dataUrl;
+            localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+            applyVisualPreferences();
+            drawingMessage.textContent = 'Gambar diterapkan sebagai background.';
+            drawingMessage.classList.add('success');
+          });
+          card.append(image, button);
+          savedDrawingList.appendChild(card);
+        });
+      };
+
+      const getCanvasPoint = (event) => {
+        const rect = drawingCanvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * (drawingCanvas.width / rect.width),
+          y: (event.clientY - rect.top) * (drawingCanvas.height / rect.height)
+        };
+      };
+
+      drawingCanvas.addEventListener('pointerdown', (event) => {
+        isDrawing = true;
+        drawingCanvas.setPointerCapture(event.pointerId);
+        const point = getCanvasPoint(event);
+        drawingContext.beginPath();
+        drawingContext.moveTo(point.x, point.y);
+      });
+
+      drawingCanvas.addEventListener('pointermove', (event) => {
+        if (!isDrawing) return;
+        const point = getCanvasPoint(event);
+        drawingContext.lineTo(point.x, point.y);
+        drawingContext.strokeStyle = drawingColor.value;
+        drawingContext.lineWidth = Number(drawingSize.value);
+        drawingContext.lineCap = 'round';
+        drawingContext.lineJoin = 'round';
+        drawingContext.stroke();
+      });
+
+      drawingCanvas.addEventListener('pointerup', () => { isDrawing = false; });
+      drawingCanvas.addEventListener('pointercancel', () => { isDrawing = false; });
+      clearDrawingBtn.addEventListener('click', clearDrawingCanvas);
+      openDrawingBtn.addEventListener('click', () => {
+        drawingModal.classList.add('open');
+        drawingModal.setAttribute('aria-hidden', 'false');
+        drawingMessage.textContent = '';
+        renderSavedDrawings();
+      });
+      closeDrawingBtn.addEventListener('click', () => {
+        drawingModal.classList.remove('open');
+        drawingModal.setAttribute('aria-hidden', 'true');
+      });
+      drawingModal.addEventListener('click', (event) => {
+        if (event.target === drawingModal) closeDrawingBtn.click();
+      });
+      saveDrawingBtn.addEventListener('click', () => {
+        const drawings = getSavedDrawings();
+        drawings.push({ id: `drawing-${Date.now()}`, name: `Gambar ${drawings.length + 1}`, dataUrl: drawingCanvas.toDataURL('image/png'), createdAt: Date.now() });
+        localStorage.setItem(DRAWINGS_KEY, JSON.stringify(drawings.slice(-12)));
+        renderSavedDrawings();
+        drawingMessage.textContent = 'Gambar berhasil disimpan.';
+        drawingMessage.classList.add('success');
+      });
+      useDrawingBackgroundBtn.addEventListener('click', () => {
+        const preferences = getPreferences();
+        preferences.theme = 'custom';
+        preferences.backgroundImage = drawingCanvas.toDataURL('image/png');
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+        applyVisualPreferences();
+        drawingMessage.textContent = 'Gambar sekarang menjadi background.';
+        drawingMessage.classList.add('success');
+      });
+      clearDrawingCanvas();
+
+      const lockPage = () => {
+        document.body.classList.add('locked');
+        localStorage.setItem(STORAGE_KEY, 'false');
+        const activeUser = getActiveUser();
+        if (activeUser) {
+          const users = getUsers();
+          const current = users.find((user) => user.username === activeUser.username);
+          if (current) {
+            current.online = false;
+            current.lastSeen = Date.now();
+            saveUsers(users);
+          }
+        }
+        clearActiveUser();
+        loginForm.reset();
+        loginPassword.type = 'password';
+        togglePasswordBtn.textContent = '👁️';
+        setLoginState('');
+        chatWidget.classList.remove('open');
+        setActiveChatTarget('all');
+        renderOnlineUsers();
+        renderChatMessages();
+        loginUsername.focus();
+      };
+
+      const unlockPage = (user) => {
+        document.body.classList.remove('locked');
+        localStorage.setItem(STORAGE_KEY, 'true');
+        if (user) {
+          const users = getUsers();
+          const current = users.find((item) => item.username === user.username);
+          if (current) {
+            current.online = true;
+            current.lastSeen = Date.now();
+            saveUsers(users);
+          }
+          setActiveUser({ ...user, online: true, lastSeen: Date.now() });
+        }
+        renderProfileHeader();
+        renderOnlineUsers();
+        renderChatMessages();
+        chatWidget.classList.add('open');
+        loginForm.reset();
+        setLoginState('Login berhasil. Selamat datang!', 'is-success');
+        window.setTimeout(() => {
+          setLoginState('');
+          loginCard.classList.remove('is-success');
+        }, 1200);
+      };
+
+      const renderProfileHeader = () => {
+        const activeUser = getActiveUser();
+        const user = activeUser || getUsers().find((item) => item.username === DEFAULT_USERNAME) || defaultUser;
+
+        profileNameLabel.textContent = user.name || user.username;
+        const avatar = user.avatar || '';
+        profileAvatarMini.textContent = avatar ? '' : getInitials(user.name || user.username);
+        profileAvatarMini.style.background = avatar ? `url(${avatar}) center/cover no-repeat` : `linear-gradient(135deg, ${user.color || '#3d6af3'}, #2449b8)`;
+      };
+
+      const openPasswordModal = () => {
+        changePasswordModal.classList.add('open');
+        changePasswordModal.setAttribute('aria-hidden', 'false');
+        oldPasswordInput.focus();
+      };
+
+      const closePasswordModal = () => {
+        changePasswordModal.classList.remove('open');
+        changePasswordModal.setAttribute('aria-hidden', 'true');
+        changePasswordForm.reset();
+        setModalMessage('');
+      };
+
+      const openRecoveryModal = () => {
+        recoveryModal.classList.add('open');
+        recoveryModal.setAttribute('aria-hidden', 'false');
+        recoveryUsername.focus();
+      };
+
+      const closeRecoveryModal = () => {
+        recoveryModal.classList.remove('open');
+        recoveryModal.setAttribute('aria-hidden', 'true');
+        recoveryForm.reset();
+        setRecoveryMessage('');
+      };
+
+      const openSignupModal = () => {
+        signupModal.classList.add('open');
+        signupModal.setAttribute('aria-hidden', 'false');
+        signupName.focus();
+      };
+
+      const closeSignupModal = () => {
+        signupModal.classList.remove('open');
+        signupModal.setAttribute('aria-hidden', 'true');
+        signupForm.reset();
+        setSignupMessage('');
+      };
+
+      const openProfileModal = () => {
+        const activeUser = getActiveUser();
+        const user = activeUser || getUsers().find((item) => item.username === DEFAULT_USERNAME) || defaultUser;
+        profileNameInput.value = user.name || '';
+        profileBioInput.value = user.bio || '';
+        profileSummaryName.textContent = user.name || user.username;
+        profileSummaryUsername.textContent = `@${user.username}`;
+        profileAvatarPreview.textContent = getInitials(user.name || user.username);
+        profileAvatarPreview.style.background = user.avatar
+          ? `url(${user.avatar}) center/cover no-repeat`
+          : `linear-gradient(135deg, ${user.color || '#3d6af3'}, #2449b8)`;
+        setProfileMessage('');
+        profileModal.classList.add('open');
+        profileModal.setAttribute('aria-hidden', 'false');
+      };
+
+      const closeProfileModal = () => {
+        profileModal.classList.remove('open');
+        profileModal.setAttribute('aria-hidden', 'true');
+        profileForm.reset();
+        setProfileMessage('');
+      };
+
+      const getActiveChatTarget = () => {
+        const saved = localStorage.getItem(ACTIVE_CHAT_TARGET_KEY);
+        return saved || 'all';
+      };
+
+      const setActiveChatTarget = (target) => {
+        localStorage.setItem(ACTIVE_CHAT_TARGET_KEY, target || 'all');
+      };
+
+      const getActiveChatChannel = () => {
+        return localStorage.getItem(ACTIVE_CHAT_CHANNEL_KEY) || 'group';
+      };
+
+      const setActiveChatChannel = (channel) => {
+        localStorage.setItem(ACTIVE_CHAT_CHANNEL_KEY, channel === 'dm' ? 'dm' : 'group');
+      };
+
+      const getActiveChatGroup = () => localStorage.getItem(ACTIVE_CHAT_GROUP_KEY) || 'class';
+
+      const setActiveChatGroup = (groupId) => {
+        localStorage.setItem(ACTIVE_CHAT_GROUP_KEY, CHAT_GROUPS.some((group) => group.id === groupId) ? groupId : 'class');
+      };
+
+      const getChatReadAt = () => Number(localStorage.getItem(CHAT_READ_KEY) || 0);
+
+      const markChatNotificationsRead = () => {
+        localStorage.setItem(CHAT_READ_KEY, String(Date.now()));
+        renderChatNotifications();
+      };
+
+      const showChatNotification = (message) => {
+        chatNotificationToast.textContent = message;
+        chatNotificationToast.classList.add('show');
+        window.clearTimeout(showChatNotification.timeoutId);
+        showChatNotification.timeoutId = window.setTimeout(() => chatNotificationToast.classList.remove('show'), 3600);
+      };
+
+      const renderChatNotifications = () => {
+        if (!getPreferences().notifications) {
+          chatNotificationBadge.hidden = true;
+          chatToggle.classList.remove('has-unread');
+          return;
+        }
+        const activeUser = getActiveUser();
+        const readAt = getChatReadAt();
+        const unread = getChatMessages().filter((message) => {
+          if (message.username === 'system' || !activeUser || message.username === activeUser.username) return false;
+          return Number(message.createdAt || 0) > readAt;
+        }).length;
+        chatNotificationBadge.textContent = unread > 9 ? '9+' : String(unread);
+        chatNotificationBadge.hidden = unread === 0;
+        chatToggle.classList.toggle('has-unread', unread > 0 && !chatWidget.classList.contains('open'));
+      };
+
+      const renderChatGroups = () => {
+        const channel = getActiveChatChannel();
+        const activeGroup = getActiveChatGroup();
+        chatGroupLabel.textContent = channel === 'dm' ? 'Pilih teman untuk chat pribadi' : 'Ruang grup';
+        chatGroupsList.innerHTML = '';
+        chatGroupsList.hidden = channel === 'dm';
+        if (channel === 'dm') return;
+
+        CHAT_GROUPS.forEach((group) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `chat-group-btn ${activeGroup === group.id ? 'active' : ''}`;
+          button.dataset.group = group.id;
+          button.innerHTML = `<span class="chat-group-icon">${group.icon}</span><span class="chat-group-name">${group.name}</span>`;
+          button.addEventListener('click', () => {
+            setActiveChatGroup(group.id);
+            setActiveChatTarget('all');
+            renderChatGroups();
+            renderOnlineUsers();
+            renderChatMessages();
+            markChatNotificationsRead();
+          });
+          chatGroupsList.appendChild(button);
+        });
+      };
+
+      const getUserStatusLabel = (user) => {
+        const lastSeen = Number(user.lastSeen || 0);
+        const isOnline = !!user.online && (Date.now() - lastSeen) < ONLINE_STATUS_TTL;
+        if (isOnline) return 'Online';
+        if (!lastSeen) return 'Offline';
+        const minsAgo = Math.max(1, Math.round((Date.now() - lastSeen) / 60000));
+        return `Aktif ${minsAgo}m lalu`;
+      };
+
+      const syncUserPresence = () => {
+        const users = getUsers();
+        const activeUser = getActiveUser();
+
+        users.forEach((user) => {
+          if (activeUser && user.username === activeUser.username) {
+            user.online = true;
+            user.lastSeen = Date.now();
+            return;
+          }
+
+          const isRecentlyActive = Number(user.lastSeen || 0) && (Date.now() - Number(user.lastSeen)) < ONLINE_STATUS_TTL;
+          user.online = Boolean(isRecentlyActive);
+        });
+
+        saveUsers(users);
+      };
+
+      const renderOnlineUsers = () => {
+        const users = getUsers();
+        const activeUser = getActiveUser();
+        const selectedTarget = getActiveChatTarget();
+        const channel = getActiveChatChannel();
+        onlineUsersList.innerHTML = '';
+
+        if (channel === 'group') {
+          const allBtn = document.createElement('button');
+          allBtn.type = 'button';
+          allBtn.className = `online-user-pill ${selectedTarget === 'all' ? 'active' : ''}`;
+          allBtn.dataset.target = 'all';
+          allBtn.innerHTML = '<span class="online-dot"></span><span>Semua grup</span>';
+          onlineUsersList.appendChild(allBtn);
+        }
+
+        users.forEach((user) => {
+          const isSelf = activeUser && user.username === activeUser.username;
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `online-user-pill ${selectedTarget === user.username ? 'active' : ''}`;
+          button.dataset.target = user.username;
+
+          const avatar = document.createElement('span');
+          avatar.className = 'online-user-avatar';
+          avatar.style.background = user.avatar
+            ? `url(${user.avatar}) center/cover no-repeat`
+            : `linear-gradient(135deg, ${user.color || '#3d6af3'}, #2449b8)`;
+          avatar.textContent = user.avatar ? '' : getInitials(user.name || user.username);
+
+          const label = document.createElement('span');
+          label.textContent = isSelf ? `${user.name || user.username} (Anda)` : user.name || user.username;
+
+          const status = document.createElement('span');
+          status.className = 'online-dot';
+          status.style.opacity = user.online ? '1' : '0.25';
+
+          button.append(avatar, label, status);
+          onlineUsersList.appendChild(button);
+        });
+
+        onlineUsersList.querySelectorAll('.online-user-pill').forEach((button) => {
+          button.addEventListener('click', () => {
+            const target = button.dataset.target || 'all';
+            setActiveChatTarget(target);
+            if (channel === 'dm') {
+              setActiveChatChannel('dm');
+            }
+            renderOnlineUsers();
+            renderChatMessages();
+          });
+        });
+      };
+
+      togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = loginPassword.type === 'password';
+        loginPassword.type = isPassword ? 'text' : 'password';
+        togglePasswordBtn.textContent = isPassword ? '🙈' : '👁️';
+      });
+
+      loginForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const enteredUsername = loginUsername.value.trim();
+        const enteredPassword = loginPassword.value.trim();
+        const users = getUsers();
+
+        if (!enteredUsername || !enteredPassword) {
+          setLoginState('Username dan sandi harus diisi.', 'is-error');
+          loginUsername.focus();
+          return;
+        }
+
+        const matchedUser = users.find(
+          (user) => user.username === enteredUsername && user.password === enteredPassword
+        );
+
+        if (matchedUser) {
+          unlockPage(matchedUser);
+          renderUserRoster();
+          return;
+        }
+
+        setLoginState('Username atau sandi salah. Coba lagi.', 'is-error');
+        loginUsername.focus();
+        loginUsername.select();
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        lockPage();
+        renderUserRoster();
+      });
+
+      createProfileBtn.addEventListener('click', () => {
+        openSignupModal();
+      });
+
+      closeSignupModalBtn.addEventListener('click', () => {
+        closeSignupModal();
+      });
+
+      signupModal.addEventListener('click', (event) => {
+        if (event.target === signupModal) {
+          closeSignupModal();
+        }
+      });
+
+      signupForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = signupName.value.trim();
+        const username = signupUsername.value.trim();
+        const password = signupPassword.value.trim();
+        const role = signupRole.value;
+        const color = signupColor.value || '#3d6af3';
+
+        if (!name || !username || !password) {
+          setSignupMessage('Semua kolom profil harus diisi.', false);
+          return;
+        }
+
+        if (password.length < 4) {
+          setSignupMessage('Sandi minimal 4 karakter.', false);
+          return;
+        }
+
+        const users = getUsers();
+        if (users.length >= MAX_USERS) {
+          setSignupMessage(`Kapasitas pengguna sudah penuh (${MAX_USERS} orang).`, false);
+          return;
+        }
+
+        if (role !== 'student' && users.some((user) => user.role === role)) {
+          setSignupMessage(`${ROLE_LABELS[role] || 'Peran tersebut'} sudah terisi. Pilih peran lain.`, false);
+          return;
+        }
+
+        const exists = users.some((user) => user.username.toLowerCase() === username.toLowerCase());
+
+        if (exists) {
+          setSignupMessage('Username sudah terdaftar. Gunakan username lain.', false);
+          return;
+        }
+
+        const newUser = {
+          id: `user-${Date.now()}`,
+          name,
+          username,
+          password,
+          color,
+          avatar: '',
+          bio: 'Belum ada bio.',
+          role,
+          showInStructure: true,
+          online: false,
+          lastSeen: Date.now()
+        };
+
+        users.push(newUser);
+        saveUsers(users);
+        renderUserRoster();
+        renderDynamicStructure();
+        setSignupMessage('Profil berhasil dibuat. Silakan login.', true);
+        window.setTimeout(() => {
+          closeSignupModal();
+          loginUsername.value = username;
+          loginPassword.value = password;
+        }, 900);
+      });
+
+      profileButton.addEventListener('click', () => {
+        openProfileModal();
+      });
+
+      closeProfileModalBtn.addEventListener('click', () => {
+        closeProfileModal();
+      });
+
+      profileModal.addEventListener('click', (event) => {
+        if (event.target === profileModal) {
+          closeProfileModal();
+        }
+      });
+
+      profileForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const activeUser = getActiveUser() || getUsers().find((item) => item.username === DEFAULT_USERNAME) || defaultUser;
+        const users = getUsers();
+        const userIndex = users.findIndex((user) => user.username === activeUser.username);
+
+        if (userIndex === -1) {
+          setProfileMessage('User aktif tidak ditemukan.', false);
+          return;
+        }
+
+        const updatedName = profileNameInput.value.trim();
+        const updatedBio = profileBioInput.value.trim();
+        if (!updatedName) {
+          setProfileMessage('Nama lengkap harus diisi.', false);
+          return;
+        }
+
+        users[userIndex].name = updatedName;
+        users[userIndex].bio = updatedBio || 'Belum ada bio.';
+
+        const finalizeProfileUpdate = () => {
+          saveUsers(users);
+          setActiveUser(users[userIndex]);
+          renderProfileHeader();
+          renderOnlineUsers();
+          renderUserRoster();
+          renderDynamicStructure();
+          setProfileMessage('Profil berhasil diperbarui.', true);
+          window.setTimeout(() => closeProfileModal(), 700);
+        };
+
+        if (profileAvatarInput.files && profileAvatarInput.files[0]) {
+          const file = profileAvatarInput.files[0];
+          const reader = new FileReader();
+          reader.onload = () => {
+            users[userIndex].avatar = reader.result;
+            finalizeProfileUpdate();
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        finalizeProfileUpdate();
+      });
+
+      forgotPasswordBtn.addEventListener('click', () => {
+        openRecoveryModal();
+      });
+
+      closeRecoveryModalBtn.addEventListener('click', () => {
+        closeRecoveryModal();
+      });
+
+      recoveryModal.addEventListener('click', (event) => {
+        if (event.target === recoveryModal) {
+          closeRecoveryModal();
+        }
+      });
+
+      recoveryForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const username = recoveryUsername.value.trim();
+        const newPassword = recoveryPassword.value.trim();
+
+        if (!username || !newPassword) {
+          setRecoveryMessage('Username dan sandi baru harus diisi.', false);
+          return;
+        }
+
+        if (newPassword.length < 4) {
+          setRecoveryMessage('Sandi baru minimal 4 karakter.', false);
+          return;
+        }
+
+        const users = getUsers();
+        const target = users.find((user) => user.username.toLowerCase() === username.toLowerCase());
+
+        if (!target) {
+          setRecoveryMessage('Username tidak ditemukan.', false);
+          return;
+        }
+
+        target.password = newPassword;
+        saveUsers(users);
+        setRecoveryMessage('Sandi berhasil direset.', true);
+        window.setTimeout(() => {
+          closeRecoveryModal();
+          loginUsername.value = username;
+          loginPassword.value = newPassword;
+        }, 1000);
+      });
+
+      changePasswordBtn.addEventListener('click', () => {
+        openPasswordModal();
+      });
+
+      preferencesBtn.addEventListener('click', openPreferencesModal);
+      closePreferencesModalBtn.addEventListener('click', closePreferencesModal);
+      preferencesModal.addEventListener('click', (event) => {
+        if (event.target === preferencesModal) {
+          closePreferencesModal();
+        }
+      });
+      preferencesForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify({
+          theme: themePreference.value,
+          notifications: notificationsPreference.checked,
+          compactChat: compactChatPreference.checked,
+          primary: customPrimaryColor.value,
+          background: customBackgroundColor.value,
+          text: customTextColor.value,
+          backgroundImage: getPreferences().backgroundImage
+        }));
+        applyVisualPreferences();
+        preferencesMessage.textContent = 'Pengaturan berhasil disimpan.';
+        preferencesMessage.classList.add('success');
+        window.setTimeout(closePreferencesModal, 700);
+      });
+
+      closePasswordModalBtn.addEventListener('click', () => {
+        closePasswordModal();
+      });
+
+      changePasswordModal.addEventListener('click', (event) => {
+        if (event.target === changePasswordModal) {
+          closePasswordModal();
+        }
+      });
+
+      changePasswordForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const activeUser = getActiveUser();
+        const users = getUsers();
+        const currentUser = users.find((user) => user.username === (activeUser ? activeUser.username : DEFAULT_USERNAME)) || defaultUser;
+        const oldPassword = oldPasswordInput.value.trim();
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value.trim();
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+          setModalMessage('Semua kolom harus diisi.', false);
+          return;
+        }
+
+        if (oldPassword !== currentUser.password) {
+          setModalMessage('Sandi lama tidak sesuai.', false);
+          return;
+        }
+
+        if (newPassword.length < 4) {
+          setModalMessage('Sandi baru minimal 4 karakter.', false);
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          setModalMessage('Konfirmasi sandi baru tidak cocok.', false);
+          return;
+        }
+
+        currentUser.password = newPassword;
+        saveUsers(users);
+        saveCredentials(currentUser.username, newPassword);
+        setModalMessage('Sandi berhasil diubah.', true);
+        window.setTimeout(() => {
+          closePasswordModal();
+        }, 1000);
+      });
+
+      const toDataUrl = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      let pendingAttachment = null;
+
+      const getChatMessages = () => {
+        const saved = localStorage.getItem(CHAT_KEY);
+
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length) {
+              return parsed;
+            }
+          } catch (error) {
+            console.warn('Format chat tidak valid:', error);
+          }
+        }
+
+        const welcomeMessage = {
+          id: 'welcome-msg',
+          username: 'system',
+          name: 'Asisten Kelas',
+          text: 'Halo! Selamat datang di chat kelas IX.1. Silakan mulai Perbincangan anda.',
+          type: 'text',
+          createdAt: Date.now()
+        };
+
+        localStorage.setItem(CHAT_KEY, JSON.stringify([welcomeMessage]));
+        return [welcomeMessage];
+      };
+
+      const saveChatMessages = (messages) => {
+        localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
+      };
+
+      const formatClock = (timestamp) => {
+        return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      };
+
+      const renderChatMessages = () => {
+        const messages = getChatMessages();
+        const activeUser = getActiveUser();
+        const target = getActiveChatTarget();
+        const channel = getActiveChatChannel();
+        const activeGroup = getActiveChatGroup();
+        const activeUsername = activeUser ? activeUser.username : '';
+        const visibleMessages = messages.filter((message) => {
+          if (message.username === 'system') return true;
+          if (channel === 'group' || target === 'all') {
+            return (!message.to || message.to === 'all') && (message.groupId || 'class') === activeGroup;
+          }
+
+          const isToTarget = message.to === target && message.username === activeUsername;
+          const isFromTarget = message.username === target && message.to === activeUsername;
+          return isToTarget || isFromTarget;
+        });
+
+        chatMessages.innerHTML = '';
+        chatMessages.classList.toggle('dm-mode', channel === 'dm');
+
+        visibleMessages.forEach((message) => {
+          const bubble = document.createElement('div');
+          const isSelf = activeUser && message.username === activeUser.username;
+
+          if (message.username === 'system') {
+            bubble.className = 'message system';
+            bubble.textContent = message.text;
+            chatMessages.appendChild(bubble);
+            return;
+          }
+
+          bubble.className = `message ${isSelf ? 'user' : 'bot'}`;
+
+          const header = document.createElement('div');
+          header.className = 'message-header';
+          header.innerHTML = `<span>${message.name || message.username}</span><span>${formatClock(message.createdAt)}</span>`;
+          bubble.appendChild(header);
+
+          if (message.text) {
+            const text = document.createElement('div');
+            text.textContent = message.text;
+            bubble.appendChild(text);
+          }
+
+          if (message.type === 'image' && message.mediaUrl) {
+            const img = document.createElement('img');
+            img.src = message.mediaUrl;
+            img.alt = message.fileName || 'Gambar';
+            img.className = 'message-image';
+            bubble.appendChild(img);
+          }
+
+          if (message.type === 'video' && message.mediaUrl) {
+            const video = document.createElement('video');
+            video.src = message.mediaUrl;
+            video.controls = true;
+            video.className = 'message-video';
+            bubble.appendChild(video);
+          }
+
+          if (message.type === 'file' && message.mediaUrl) {
+            const link = document.createElement('a');
+            link.href = message.mediaUrl;
+            link.download = message.fileName || 'file';
+            link.className = 'message-file';
+            link.textContent = `📎 ${message.fileName || 'File lampiran'}`;
+            bubble.appendChild(link);
+          }
+
+          const actions = document.createElement('div');
+          actions.className = 'message-actions';
+          const reactions = message.reactions || {};
+          REACTION_OPTIONS.forEach((emoji) => {
+            const count = Array.isArray(reactions[emoji]) ? reactions[emoji].length : 0;
+            const reactionButton = document.createElement('button');
+            reactionButton.type = 'button';
+            reactionButton.className = `message-reaction-btn ${count && reactions[emoji].includes(activeUsername) ? 'active' : ''}`;
+            reactionButton.innerHTML = `${emoji}${count ? `<span class="reaction-count">${count}</span>` : ''}`;
+            reactionButton.setAttribute('aria-label', `Reaksi ${emoji}`);
+            reactionButton.addEventListener('click', () => {
+              if (!activeUser) return;
+              const allMessages = getChatMessages();
+              const targetMessage = allMessages.find((item) => item.id === message.id);
+              if (!targetMessage) return;
+              targetMessage.reactions = targetMessage.reactions || {};
+              targetMessage.reactions[emoji] = Array.isArray(targetMessage.reactions[emoji]) ? targetMessage.reactions[emoji] : [];
+              const userIndex = targetMessage.reactions[emoji].indexOf(activeUsername);
+              if (userIndex === -1) {
+                targetMessage.reactions[emoji].push(activeUsername);
+              } else {
+                targetMessage.reactions[emoji].splice(userIndex, 1);
+              }
+              saveChatMessages(allMessages);
+              renderChatMessages();
+            });
+            actions.appendChild(reactionButton);
+          });
+          bubble.appendChild(actions);
+
+          chatMessages.appendChild(bubble);
+        });
+
+        const targetUser = target === 'all' ? null : getUsers().find((user) => user.username === target);
+        const activeGroupInfo = CHAT_GROUPS.find((group) => group.id === activeGroup) || CHAT_GROUPS[0];
+        chatTitle.textContent = channel === 'dm' && targetUser ? `DM · ${targetUser.name || targetUser.username}` : activeGroupInfo.name;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        renderChatNotifications();
+      };
+
+      const prepareAttachment = async (file) => {
+        if (!file) {
+          pendingAttachment = null;
+          chatAttachmentMeta.textContent = '';
+          return;
+        }
+
+        const dataUrl = await toDataUrl(file);
+        pendingAttachment = {
+          file,
+          type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file',
+          mediaUrl: dataUrl,
+          fileName: file.name
+        };
+        chatAttachmentMeta.textContent = `Lampiran: ${file.name}`;
+      };
+
+      chatAttachmentBtn.addEventListener('click', () => {
+        chatFileInput.click();
+      });
+
+      chatFileInput.addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          await prepareAttachment(file);
+        }
+      });
+
+      chatForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const activeUser = getActiveUser();
+
+        if (!activeUser) {
+          setLoginState('Silakan login terlebih dahulu.', 'is-error');
+          return;
+        }
+
+        const text = chatInput.value.trim();
+        const messages = getChatMessages();
+        const target = getActiveChatTarget();
+        const channel = getActiveChatChannel();
+        const activeGroup = getActiveChatGroup();
+
+        if (!text && !pendingAttachment) {
+          return;
+        }
+
+        const newMessage = {
+          id: `msg-${Date.now()}`,
+          username: activeUser.username,
+          name: activeUser.name,
+          text: text || '',
+          type: pendingAttachment ? pendingAttachment.type : 'text',
+          mediaUrl: pendingAttachment ? pendingAttachment.mediaUrl : '',
+          fileName: pendingAttachment ? pendingAttachment.fileName : '',
+          to: channel === 'dm' ? target : 'all',
+          groupId: channel === 'dm' ? '' : activeGroup,
+          createdAt: Date.now()
+        };
+
+        messages.push(newMessage);
+        saveChatMessages(messages);
+        renderChatMessages();
+        renderChatNotifications();
+
+        chatInput.value = '';
+        chatFileInput.value = '';
+        pendingAttachment = null;
+        chatAttachmentMeta.textContent = '';
+      });
+
+      if (localStorage.getItem(STORAGE_KEY) === 'true') {
+        const activeUser = getActiveUser();
+        if (activeUser) {
+          unlockPage(activeUser);
+        }
+      } else {
+        lockPage();
+      }
+
+      if (!localStorage.getItem(USERS_KEY)) {
+        saveUsers([defaultUser]);
+      }
+
+      if (!localStorage.getItem(CHAT_KEY)) {
+        saveChatMessages(getChatMessages());
+      }
+
+      syncUserPresence();
+      window.addEventListener('storage', () => {
+        syncUserPresence();
+        renderProfileHeader();
+        renderOnlineUsers();
+        renderChatMessages();
+        renderChatGroups();
+        renderChatNotifications();
+      });
+      window.setInterval(() => {
+        syncUserPresence();
+        renderOnlineUsers();
+        renderChatMessages();
+        renderChatNotifications();
+      }, 5000);
+
+      setActiveChatTarget('all');
+      setActiveChatChannel('group');
+      setActiveChatGroup(getActiveChatGroup());
+      document.querySelectorAll('.chat-channel-btn').forEach((button) => {
+        button.classList.toggle('active', button.dataset.channel === 'group');
+      });
+      renderProfileHeader();
+      renderOnlineUsers();
+      renderChatMessages();
+      renderChatGroups();
+      renderChatNotifications();
+      chatWidget.classList.add('open');
+
+      document.querySelectorAll('.chat-channel-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const nextChannel = button.dataset.channel || 'group';
+          setActiveChatChannel(nextChannel);
+          document.querySelectorAll('.chat-channel-btn').forEach((item) => {
+            item.classList.toggle('active', item.dataset.channel === nextChannel);
+          });
+
+          if (nextChannel === 'dm') {
+            const currentUser = getActiveUser();
+            const users = getUsers();
+            const firstTarget = users.find((user) => user.username !== (currentUser ? currentUser.username : ''));
+            setActiveChatTarget(firstTarget ? firstTarget.username : 'all');
+          } else {
+            setActiveChatTarget('all');
+          }
+
+          renderChatGroups();
+          renderOnlineUsers();
+          renderChatMessages();
+          markChatNotificationsRead();
+        });
+      });
+
+      chatNotificationBtn.addEventListener('click', () => {
+        markChatNotificationsRead();
+        showChatNotification('Semua pesan sudah ditandai terbaca.');
+      });
+
+      chatToggle.addEventListener('click', () => {
+        chatWidget.classList.toggle('open');
+      });
+
+      const students = [
+        { name: 'Salsa Aulia', initials: 'SA', color: '#4c7ef3', hobbies: ['Menulis', 'Vlog'] },
+        { name: 'Dimas Prasetyo', initials: 'DP', color: '#7d6cff', hobbies: ['Sepak Bola', 'Nonton Film'] },
+        { name: 'Farah Nabila', initials: 'FN', color: '#ff7f50', hobbies: ['Menggambar', 'Menyanyi'] },
+        { name: 'Ikhsan Hidayat', initials: 'IH', color: '#2db3a8', hobbies: ['Futsal', 'Belajar'] },
+        { name: 'Yuni Kartika', initials: 'YK', color: '#ff8fab', hobbies: ['Kantin', 'Memasak'] },
+        { name: 'Ardiansyah', initials: 'AR', color: '#5ea8ff', hobbies: ['Gaming', 'Denger Musik'] },
+        { name: 'Citra Dewi', initials: 'CD', color: '#9b5de5', hobbies: ['Baca Novel', 'Jalan-Jalan'] },
+        { name: 'Zidan Rahman', initials: 'ZR', color: '#00b894', hobbies: ['Bersepeda', 'Renang'] },
+        { name: 'Aisyah Rahma', initials: 'AR', color: '#f15bb5', hobbies: ['Mewarnai', 'Menari'] },
+        { name: 'Ferdi Saputra', initials: 'FS', color: '#ff9f1c', hobbies: ['Badminton', 'Ngaji'] },
+        { name: 'Putri Lestari', initials: 'PL', color: '#06d6a0', hobbies: ['Masak', 'Tidur'] },
+        { name: 'Rizky Ananda', initials: 'RA', color: '#8ecae6', hobbies: ['Fotografi', 'Traveling'] },
+        { name: 'Maya Safitri', initials: 'MS', color: '#ef476f', hobbies: ['Membuat Karya', 'Menjahit'] },
+        { name: 'Bagas Putra', initials: 'BP', color: '#ffb703', hobbies: ['Mancing', 'Main Bola'] },
+        { name: 'Lina Permata', initials: 'LP', color: '#7b2cbf', hobbies: ['Bulu Tangkis', 'Shalat'] },
+        { name: 'Hafiz Rahmat', initials: 'HR', color: '#2a9d8f', hobbies: ['Coding', 'Membaca'] },
+        { name: 'Khansa Azka', initials: 'KA', color: '#f77f00', hobbies: ['Menyanyi', 'Membuat Video'] },
+        { name: 'Aldo Pratama', initials: 'AP', color: '#118ab2', hobbies: ['Volley', 'Mendengarkan Musik'] },
+        { name: 'Rania Fadila', initials: 'RF', color: '#8338ec', hobbies: ['Menulis Puisi', 'Baca Cerpen'] },
+        { name: 'Taufik Yusuf', initials: 'TY', color: '#219ebc', hobbies: ['Basket', 'Ngaji'] },
+        { name: 'Suci Ramadhani', initials: 'SR', color: '#ff6b6b', hobbies: ['Melukis', 'Jalan Santai'] },
+        { name: 'Kevin Saputra', initials: 'KS', color: '#fb8500', hobbies: ['Esports', 'Olahraga'] },
+        { name: 'Nadya Permana', initials: 'NP', color: '#6a4c93', hobbies: ['Berenang', 'Membaca'] },
+        { name: 'Edo Wijaya', initials: 'EW', color: '#06d6a0', hobbies: ['Catur', 'Pecinta Alam'] },
+        { name: 'Amini Lestari', initials: 'AL', color: '#ea638c', hobbies: ['Seni Tari', 'Menulis'] },
+        { name: 'Bima Sakti', initials: 'BS', color: '#3a86ff', hobbies: ['Mancing', 'Belajar'] },
+        { name: 'Dewi Anggraini', initials: 'DA', color: '#ffafcc', hobbies: ['Membuat Kolase', 'Traveling'] },
+        { name: 'Raka Pradana', initials: 'RP', color: '#52b69a', hobbies: ['Futsal', 'Baca Komik'] },
+        { name: 'Mira Kusuma', initials: 'MK', color: '#f72585', hobbies: ['Menari', 'Menyanyi'] },
+        { name: 'Siti Nurhaliza', initials: 'SN', color: '#9d4edd', hobbies: ['Membaca', 'Berjalan Kaki'] }
+      ];
+
+      const studentGrid = document.getElementById('student-grid');
+      const userGrid = document.getElementById('user-grid');
+      const searchInput = document.getElementById('searchInput');
+      const optionButtons = document.querySelectorAll('.opt-btn');
+
+      const applyOption = (option) => {
+        document.body.classList.toggle('option-1', option === '1');
+        document.body.classList.toggle('option-2', option === '2');
+        document.body.classList.toggle('option-3', option === '3');
+
+        optionButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.option === option);
+        });
+      };
+
+      optionButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const preferences = getPreferences();
+          preferences.theme = button.dataset.option;
+          preferences.backgroundImage = '';
+          localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+          applyVisualPreferences();
+        });
+      });
+
+      const savedPreferences = getPreferences();
+      applyVisualPreferences();
+
+      const renderUserRoster = () => {
+        const users = getUsers();
+        const activeUser = getActiveUser();
+        userGrid.innerHTML = '';
+        totalUserCount.textContent = `${users.length}/${MAX_USERS}`;
+
+        users.forEach((user) => {
+          const card = document.createElement('article');
+          card.className = `user-card ${activeUser && activeUser.username === user.username ? 'user-card-self' : ''}`;
+
+          const top = document.createElement('div');
+          top.className = 'user-card-top';
+          const avatar = document.createElement('div');
+          avatar.className = 'user-card-avatar';
+          avatar.textContent = user.avatar ? '' : getInitials(user.name || user.username);
+          avatar.style.background = user.avatar
+            ? `url(${user.avatar}) center/cover no-repeat`
+            : `linear-gradient(135deg, ${user.color || '#3d6af3'}, #2449b8)`;
+
+          const identity = document.createElement('div');
+          const name = document.createElement('h4');
+          name.textContent = user.name || user.username;
+          const role = document.createElement('p');
+          role.className = 'user-card-role';
+          role.textContent = user.role === 'teacher' ? 'Wali Kelas' : 'Siswa';
+          identity.append(name, role);
+          top.append(avatar, identity);
+
+          const bio = document.createElement('p');
+          bio.className = 'user-card-bio';
+          bio.textContent = user.bio || 'Belum ada bio.';
+          card.append(top, bio);
+
+          if (activeUser && activeUser.username === user.username) {
+            const editButton = document.createElement('button');
+            editButton.type = 'button';
+            editButton.className = 'user-card-edit';
+            editButton.textContent = 'Edit profil';
+            editButton.addEventListener('click', openProfileModal);
+            card.appendChild(editButton);
+          }
+
+          userGrid.appendChild(card);
+        });
+      };
+
+      const ROLE_LABELS = {
+        system: 'Admin Sistem',
+        teacher: 'Wali Kelas',
+        'class-leader': 'Ketua Murid',
+        'vice-class-leader': 'Wakil Ketua Murid',
+        'treasurer-1': 'Bendahara 1',
+        'treasurer-2': 'Bendahara 2',
+        'secretary-1': 'Sekretaris 1',
+        'secretary-2': 'Sekretaris 2',
+        security: 'Keamanan',
+        cleanliness: 'Kebersihan',
+        student: 'Murid'
+      };
+
+      const renderDynamicStructure = () => {
+        const users = getUsers().filter((user) => user.showInStructure);
+        treeStructure.classList.add('user-driven');
+        dynamicStructure.innerHTML = '';
+
+        if (!users.length) {
+          const empty = document.createElement('div');
+          empty.className = 'structure-empty';
+          empty.textContent = 'Struktur kelas masih kosong. Buat akun baru untuk menambahkan anggota kelas.';
+          dynamicStructure.appendChild(empty);
+          return;
+        }
+
+        users.forEach((user) => {
+          const card = document.createElement('article');
+          card.className = 'dynamic-role-card';
+          const label = document.createElement('p');
+          label.className = 'dynamic-role-label';
+          label.textContent = ROLE_LABELS[user.role] || 'Murid';
+          const name = document.createElement('h3');
+          name.textContent = user.name || user.username;
+          const bio = document.createElement('p');
+          bio.textContent = user.bio || 'Belum ada keterangan diri.';
+          card.append(label, name, bio);
+          dynamicStructure.appendChild(card);
+        });
+      };
+
+      const renderStudents = (data) => {
+        studentGrid.innerHTML = '';
+
+        data.forEach((student) => {
+          const card = document.createElement('article');
+          card.className = 'member-card';
+
+          const badge = document.createElement('span');
+          badge.className = 'role-badge badge-member';
+          badge.textContent = 'Murid';
+
+          const top = document.createElement('div');
+          top.className = 'member-top';
+
+          const photo = document.createElement('div');
+          photo.className = 'member-photo';
+          photo.style.background = `linear-gradient(135deg, ${student.color}, ${student.color}cc)`;
+          photo.textContent = student.initials;
+
+          const info = document.createElement('div');
+          info.innerHTML = `
+            <h4>${student.name}</h4>
+            <p class="member-role">Anggota</p>
+          `;
+
+          top.append(photo, info);
+
+          const hobbyBox = document.createElement('div');
+          hobbyBox.className = 'hobby-box';
+          student.hobbies.forEach((hobby) => {
+            const chip = document.createElement('span');
+            chip.textContent = hobby;
+            hobbyBox.appendChild(chip);
+          });
+
+          card.append(badge, top, hobbyBox);
+          studentGrid.appendChild(card);
+        });
+      };
+
+      renderStudents(students);
+      renderUserRoster();
+      renderDynamicStructure();
+
+      searchInput.addEventListener('input', (event) => {
+        const query = event.target.value.toLowerCase();
+        const filtered = students.filter((student) =>
+          student.name.toLowerCase().includes(query)
+        );
+        renderStudents(filtered);
+      });
+    </script>
+  </body>
+</html>
